@@ -1,93 +1,56 @@
-import { useRef } from "react";
-import { Button, Form, Modal } from "react-bootstrap";
-import { UNCATEGORIZED_BUDGET_ID, useBudgets } from "../context/BudgetsContext";
+import { Modal, Button, Stack } from "react-bootstrap"
+import { UNCATEGORIZED_BUDGET_ID, useBudgets } from "../context/BudgetsContext"
+import { currencyFormatter } from "../utils"
 
-export default function ViewExpensesModal({show , handleClose}){
-    const { addExpense , budgets} = useBudgets();
+export function ViewExpensesModal({ budgetId, handleClose }) {
+  const { getBudgetExpenses, budgets, deleteBudget, deleteExpense } = useBudgets()
 
-    function handleSubmit(e){
-        e.preventDefault();
+  const expenses = getBudgetExpenses(budgetId)
+  console.log("hi the expenses are " ,expenses);
+  const budget =
+    UNCATEGORIZED_BUDGET_ID === budgetId
+      ? { name: "Uncategorized", id: UNCATEGORIZED_BUDGET_ID }
+      : budgets.find(b => b.id === budgetId)
 
-        const data = {
-        description:descriptionRef.current.value,
-        amount:amountRef.current.value,
-        budgetId:budgetIdRef.current.value
-        }
-
-        addExpense(data)
-        handleClose()
-    }
-    return (
-        <Modal show={show} onHide={handleClose}>
-            <Form onSubmit={handleSubmit}>
-                <Modal.Header closeButton>
-                    <Modal.Title>New Expense</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form.Group className="mb-3" controlId="description">
-                        <Form.Label>Description</Form.Label>
-                        <Form.Control ref={descriptionRef} type="text" required></Form.Control>
-                    </Form.Group>
-                    <Form.Group className="mb-3" controlId="amount">
-                        <Form.Label>Amount</Form.Label>
-                        <Form.Control type="number" ref={amountRef} required min={1} step={1}></Form.Control>
-                    </Form.Group>
-                    <Form.Group className="mb-3" controlId="budgetId">
-                        <Form.Label>Budget</Form.Label>
-                        <Form.Select
-                        defaultValue={defaultBudgetId}
-                        ref={budgetIdRef}>
-                            <option id={UNCATEGORIZED_BUDGET_ID}>Uncategorized</option>  
-                            {budgets.map( budget => (
-                                <option key={budget.id} value={budget.id}>{budget.name}</option>
-                            ))}
-                        </Form.Select>
-                    </Form.Group>
-
-                    <div className="d-flex justify-content-end">
-                        <Button variant="primary" type="submit">Add</Button>
-                    </div>
-                </Modal.Body>
-            </Form>
-        </Modal>
-    )
-}
-
-export function AddBudgetModal({show , handleClose}){
-    const nameRef = useRef()
-    const maxRef = useRef()
-    const {addBudget} = useBudgets()
-    function handleSubmit(e){
-        e.preventDefault();
-        const data = {
-        name:nameRef.current.value,
-        max:maxRef.current.value
-        }
-
-        addBudget(data)
-        handleClose()
-    }
-    return (
-        <Modal show={show} onHide={handleClose}>
-            <Form onSubmit={handleSubmit}>
-                <Modal.Header closeButton>
-                    <Modal.Title>New Budget</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form.Group className="mb-3" controlId="name">
-                        <Form.Label>Name</Form.Label>
-                        <Form.Control ref={nameRef} type="text" required></Form.Control>
-                    </Form.Group>
-                    <Form.Group className="mb-3" controlId="max">
-                        <Form.Label>Max Spending</Form.Label>
-                        <Form.Control type="number" ref={maxRef} required min={1} step={1}></Form.Control>
-                    </Form.Group>
-
-                    <div className="d-flex justify-content-end">
-                        <Button variant="primary" type="submit">Add</Button>
-                    </div>
-                </Modal.Body>
-            </Form>
-        </Modal>
-    )
+  return (
+    <Modal show={budgetId != null} onHide={handleClose}>
+      <Modal.Header closeButton>
+        <Modal.Title>
+          <Stack direction="horizontal" gap="2">
+            <div>Expenses - {budget?.name}</div>
+            {budgetId !== UNCATEGORIZED_BUDGET_ID && (
+              <Button
+                onClick={() => {
+                  deleteBudget(budget)
+                  handleClose()
+                }}
+                variant="outline-danger"
+              >
+                Delete
+              </Button>
+            )}
+          </Stack>
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Stack direction="vertical" gap="3">
+          {expenses.map(expense => (
+            <Stack direction="horizontal" gap="2" key={expense.id}>
+              <div className="me-auto fs-4">{expense.desc}</div>
+              <div className="fs-5">
+                {currencyFormatter.format(expense.amount)}
+              </div>
+              <Button
+                onClick={() => deleteExpense(expense)}
+                size="sm"
+                variant="outline-danger"
+              >
+                &times;
+              </Button>
+            </Stack>
+          ))}
+        </Stack>
+      </Modal.Body>
+    </Modal>
+  )
 }
